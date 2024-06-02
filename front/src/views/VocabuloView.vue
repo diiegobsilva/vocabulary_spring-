@@ -1,20 +1,22 @@
 <template>
   <div class="about">
-    <h1>Vocabulos</h1>
-    <p><label for="termo">Termo: </label><input id="termo" type="text" v-model="vocabulo.termo"/></p>
-    <p><label for="significado">Significado: </label><input id="significado" type="text" v-model="vocabulo.significado"/></p>
-    <p><label for="versao">Versão: </label><input id="versao" type="number" v-model="vocabulo.versao"/></p>
-    <p><label for="dataHoraDesativacao">Data/Hora Desativação: </label><input id="dataHoraDesativacao" type="datetime-local" v-model="vocabulo.dataHoraDesativacao"/></p>
-    <p><label for="dataHoraCadastro">Data/Hora Cadastro: </label><input id="dataHoraCadastro" type="datetime-local" v-model="vocabulo.dataHoraCadastro"/></p>
+    <h1>Vocábulos</h1>
+    <p><label for="termo">Termo: </label><input id="termo" type="text" v-model="vocabulo.termo" /></p>
+    <p><label for="significado">Significado: </label><input id="significado" type="text" v-model="vocabulo.significado" /></p>
+    <p><label for="versao">Versão: </label><input id="versao" type="number" v-model="vocabulo.versao" /></p>
+    <p><label for="dataHoraDesativacao">Data/Hora Desativação: </label><input id="dataHoraDesativacao" type="datetime-local" v-model="vocabulo.dataHoraDesativacao" /></p>
     <button>Atualizar</button>
     <button @click="incluir">Incluir</button>
 
     <table>
       <thead>
-        <td>Id</td>
-        <td>Termo</td>
-        <td>Significado</td>
-        <td>Versão</td>
+        <tr>
+          <th>Id</th>
+          <th>Termo</th>
+          <th>Significado</th>
+          <th>Versão</th>
+          <th>Situação</th>
+        </tr>
       </thead>
       <tbody>
         <tr v-for="vocabulo in vocabulos" :key="vocabulo.id">
@@ -22,6 +24,7 @@
           <td>{{ vocabulo.termo }}</td>
           <td>{{ vocabulo.significado }}</td>
           <td>{{ vocabulo.versao }}</td>
+          <td>{{ vocabulo.situacao }}</td>
         </tr>
       </tbody>
     </table>
@@ -34,27 +37,45 @@ import { onMounted, ref } from 'vue';
 import axios from 'axios';
 
 const vocabulos = ref();
+
 const vocabulo = ref({
   termo: '',
   significado: '',
   versao: null,
-  dataHoraCadastro: '',
-  dataHoraDesativacao: ''
+  dataHoraDesativacao: '',
+  dataHoraCadastro: ''
 });
+
 async function buscarVocabulos() {
-  vocabulos.value = (await axios.get("vocabulo")).data;
+  try {
+    const response = await axios.get("/vocabulo");
+    vocabulos.value = response.data.map((situacaoVocabulo:any) => ({
+      ...situacaoVocabulo,
+      situacao: situacaoVocabulo.dataHoraDesativacao ? 'desativado' : 'ativo',
+    }));
+  } catch (error) {
+    console.error('Erro ao buscar vocábulos:', error);
   }
+}
 
 async function incluir() {
   try {
     const response = await axios.post("/vocabulo", vocabulo.value);
-    console.log('Vocabulo criado com sucesso:', response.data);
+    console.log('Vocábulo criado com sucesso:', response.data);
+    buscarVocabulos(); 
+    vocabulo.value = {
+      termo: '',
+      significado: '',
+      versao: null,
+      dataHoraDesativacao: '',
+      dataHoraCadastro: ''
+    };
   } catch (error) {
-    console.error('Erro ao criar Vocabulo:', error);
+    console.error('Erro ao criar Vocábulo:', error);
   }
 }
 
 onMounted(() => {
-  buscarVocabulos()
-})
+  buscarVocabulos();
+});
 </script>
